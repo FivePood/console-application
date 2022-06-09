@@ -48,8 +48,6 @@ class Migrate
 
     private function getMigrationFiles(DBConnection $conn): bool|array
     {
-//        var_dump($conn);die();
-
         $sqlFolder = str_replace('\\', '/', realpath(dirname(__FILE__)) . '/');
         $allFiles = glob($sqlFolder . '*.sql');
 
