@@ -118,13 +118,13 @@ class Application
             }
 
             if (preg_match("/[\[\]]/", $value)) {
-                $optionsArr = explode("=", trim($value, '[]'));
-                $optionsId = $conn->getOne("SELECT * FROM `options` WHERE `options`.`optionsName` IN (?s)", ($optionsArr[0]));
+                $options = explode("=", trim($value, '[]'));
+                $optionsId = $conn->getOne("SELECT * FROM `options` WHERE `options`.`optionsName` IN (?s) AND `options`.`commandId` IN (?s)", ($options[0]), $commandId);
                 if (empty($optionsId)) {
-                    $conn->query("INSERT INTO `options` (`optionsName`, `commandId`) VALUES (?s, ?s)", $optionsArr[0], $commandId);
-                    $optionsId = $conn->getOne("SELECT * FROM `options` WHERE `options`.`optionsName` IN (?s)", ($optionsArr[0]));
+                    $conn->query("INSERT INTO `options` (`optionsName`, `commandId`) VALUES (?s, ?s)", $options[0], $commandId);
+                    $optionsId = $conn->getOne("SELECT * FROM `options` WHERE `options`.`optionsName` IN (?s) AND `options`.`commandId` IN (?s)", ($options[0]), $commandId);
                 }
-                $conn->query("INSERT INTO `optionsMeaning` (`meaning`, `optionsId`) VALUES (?s, ?s)", $optionsArr[1], $optionsId);
+                $conn->query("INSERT INTO `optionsMeaning` (`meaning`, `optionsId`) VALUES (?s, ?s)", $options[1], $optionsId);
             }
         }
 

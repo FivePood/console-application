@@ -5,7 +5,7 @@ Console application
 
 ###Инициализация миграций:
 ```
-php migrate.php
+php app.php migrate
 ```
 ###Примеры запросов:
 

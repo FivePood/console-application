@@ -22,7 +22,7 @@ class DBConnection
         'versions' => 'versions',
     );
 
-    function __construct(DBConnectionParams $dbParams)
+    public function __construct(DBConnectionParams $dbParams)
     {
         $this->_params = array_merge($this->_defaultParams, $dbParams->getDbSettings());
 
@@ -42,38 +42,37 @@ class DBConnection
             $this->_params['host'] = "p:" . $this->_params['host'];
         }
 
-        @$this->_conn = mysqli_connect($this->_params['host'], $this->_params['user'], $this->_params['pass'], $this->_params['db'], $this->_params['port'], $this->_params['socket']);
+        $this->_conn = mysqli_connect($this->_params['host'], $this->_params['user'], $this->_params['pass'], $this->_params['db'], $this->_params['port'], $this->_params['socket']);
         if (!$this->_conn) {
             $this->error(mysqli_connect_errno() . " " . mysqli_connect_error());
         }
 
         mysqli_set_charset($this->_conn, $this->_params['charset']) or $this->error(mysqli_error($this->_conn));
-        unset($this->_params);
     }
 
     public function getUser(): string
     {
-        return $this->_defaultParams['user'];
+        return $this->_params['user'];
     }
 
     public function getPassword(): string
     {
-        return $this->_defaultParams['pass'];
+        return $this->_params['pass'];
     }
 
     public function getHost(): string
     {
-        return $this->_defaultParams['host'];
+        return $this->_params['host'];
     }
 
     public function getDBName(): string
     {
-        return $this->_defaultParams['db'];
+        return $this->_params['db'];
     }
 
     public function getVersion(): string
     {
-        return $this->_defaultParams['versions'];
+        return $this->_params['versions'];
     }
 
     public function query(): mysqli_result|bool
@@ -146,7 +145,7 @@ class DBConnection
     {
         $query = '';
         $raw = array_shift($args);
-        $array = preg_split('~(\?[nsiuap])~u', $raw, -1, PREG_SPLIT_DELIM_CAPTURE);
+        $array = preg_split('~(\?[nsiuap])~u', $raw, null, PREG_SPLIT_DELIM_CAPTURE);
         $anum = count($args);
         $pnum = floor(count($array) / 2);
         if ($pnum != $anum) {
