@@ -1,19 +1,11 @@
 <?php
-include 'DBConnection.php';
-include 'DBConnectionParams.php';
-include 'Application.php';
-include 'migration/Migrate.php';
 
-$dbConn = new DBConnection(new DBConnectionParams());
+require_once __DIR__ . '/vendor/autoload.php';
 
-if (!empty($argv[1]) && $argv[1] == 'migrate') {
-    $do = new Migrate($dbConn);
-} else {
-    $do = new Application($dbConn);
-    if (empty($argv[1])) {
-        $do->viewList();
-    } else {
-        $do->addCommand($argv);
-    }
+try {
+    $do = new Console\CommandHandler();
+    $do->parseCommand($argv);
+} catch (Exception $e) {
+    echo "\nRuntime error. {$e->getMessage()}\n";
 }
 echo "\n";

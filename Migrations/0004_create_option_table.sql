@@ -1,10 +1,10 @@
-CREATE TABLE `options`
+CREATE TABLE `option`
 (
-    `optionsId` int(11) unsigned NOT NULL AUTO_INCREMENT,
-    `optionsName` text,
+    `optionId` int(11) unsigned NOT NULL AUTO_INCREMENT,
+    `optionName` text,
     `commandId` int(11) unsigned NOT NULL,
-    PRIMARY KEY (`optionsId`),
-    CONSTRAINT fk_options_command
+    PRIMARY KEY (`optionId`),
+    CONSTRAINT fk_option_command
     FOREIGN KEY (`commandId`)  REFERENCES `command`(`commandId`)
 )
 ENGINE = innodb

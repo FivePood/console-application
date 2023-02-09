@@ -1,10 +1,10 @@
-CREATE TABLE `arguments`
+CREATE TABLE `argument`
 (
-    `argumentsId` int(11) unsigned NOT NULL AUTO_INCREMENT,
-    `argumentsName` text,
+    `argumentId` int(11) unsigned NOT NULL AUTO_INCREMENT,
+    `argumentName` text,
     `commandId` int(11) unsigned NOT NULL,
-    PRIMARY KEY (`argumentsId`),
-    CONSTRAINT `fk_arguments_command`
+    PRIMARY KEY (`argumentId`),
+    CONSTRAINT `fk_argument_command`
     FOREIGN KEY (`commandId`)  REFERENCES `command`(`commandId`)
 )
 ENGINE = innodb

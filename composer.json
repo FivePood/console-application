@@ -1,0 +1,27 @@
+{
+  "name": "fivepood/console-application",
+  "type": "library",
+  "version": "1.0.0",
+  "description": "Library for creating console commands",
+  "homepage": "https://github.com/FivePood/console-application.git",
+  "authors": [
+    {
+      "name": "Pavel Lebedev",
+      "email": "ps220790@gmail.com"
+    }
+  ],
+  "require": {
+    "php": ">=8.0",
+    "ext-mysqli": "*"
+  },
+  "autoload": {
+    "psr-4": {
+      "migrations\\": "migrations/",
+      "Console\\": "src/Console/",
+      "Module\\": "src/Module/",
+      "Command\\": "src/Module/Command/",
+      "Database\\": "src/Module/Database/",
+      "Output\\": "src/Module/Output"
+    }
+  }
+}
