@@ -1,6 +1,6 @@
-<?php
+<?php declare(strict_types=1);
 
-namespace Database;
+namespace Database\Api;
 
 use mysqli_result;
 
@@ -8,7 +8,7 @@ interface ConnectionInterface
 {
     public function connect(): ConnectionInterface;
 
-    public function query(): mysqli_result|bool;
+    public function request(): mysqli_result|bool;
 
     public function getUser(): string;
 

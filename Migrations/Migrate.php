@@ -1,27 +1,27 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace migrations;
 
-use Database\ConnectionInterface;
 use Exception;
-use Database\Connection;
-use Database\Params;
+use Database\Api\ConnectionInterface;
+use Database\Service\Connection;
+use Database\Service\Params;
 
 class Migrate
 {
-    private ConnectionInterface $_connection;
+    private ConnectionInterface $connection;
 
     /** @throws Exception */
     function __construct()
     {
-        $this->_connection = new Connection(new Params());
+        $this->connection = new Connection(new Params());
         $this->init();
     }
 
     /** @throws Exception */
     private function init(): void
     {
-        $conn = $this->_connection->connect();
+        $conn = $this->connection->connect();
         $migrations = $this->getMigrationFiles($conn);
 
         if (empty($migrations)) {
@@ -36,7 +36,7 @@ class Migrate
                                    $conn->getDBName(),
                                    $migration);
                 shell_exec($command);
-                $conn->query(sprintf('INSERT INTO `%s` (`name`) VALUES ("%s")', $conn->getVersion(), basename($migration)));
+                $conn->request(sprintf('INSERT INTO `%s` (`name`) VALUES ("%s")', $conn->getVersion(), basename($migration)));
                 echo basename($migration) . "\n";
             }
             echo "\nMigration completed.\n";
@@ -49,7 +49,7 @@ class Migrate
         $allFiles = glob($sqlFolder . '*.sql');
 
         $query = sprintf('show tables from `%s` like "%s"', $conn->getDBName(), $conn->getVersion());
-        $data = $conn->query($query);
+        $data = $conn->request($query);
         $firstMigration = !$data->num_rows;
 
         if ($firstMigration) {
@@ -59,7 +59,7 @@ class Migrate
         $versionsFiles = [];
 
         $query = sprintf('SELECT `name` FROM `%s`', $conn->getVersion());
-        $data = $conn->query($query)->fetch_all(MYSQLI_ASSOC);
+        $data = $conn->request($query)->fetch_all(MYSQLI_ASSOC);
         foreach ($data as $row) {
             $versionsFiles[] = $sqlFolder . $row['name'];
         }

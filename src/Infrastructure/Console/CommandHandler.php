@@ -1,19 +1,17 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Console;
 
 use Exception;
 use migrations\Migrate;
-use Command\Command;
-use Command\CommandInterface;
-use Command\DefaultCommand;
 use Output\Show;
-use Output\ShowInterface;
+use Command\Api\CommandInterface;
+use Command\Service\Command;
 
 class CommandHandler
 {
     private CommandInterface $command;
-    private ShowInterface $show;
+    private Show $show;
 
     public function __construct()
     {

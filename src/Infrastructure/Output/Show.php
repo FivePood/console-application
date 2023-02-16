@@ -1,8 +1,8 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Output;
 
-class Show implements ShowInterface
+class Show
 {
     public function viewCommand(string $commandName, array $command): void
     {

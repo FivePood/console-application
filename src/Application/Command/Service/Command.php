@@ -1,33 +1,34 @@
-<?php
+<?php declare(strict_types=1);
 
-namespace Command;
+namespace Command\Service;
 
 use Exception;
-use Database\Connection;
-use Database\ConnectionInterface;
-use Database\Params;
+use Command\Api\CommandInterface;
+use Database\Api\ConnectionInterface;
+use Database\Service\Connection;
+use Database\Service\Params;
 
 class Command implements CommandInterface
 {
-    private ConnectionInterface $_connection;
+    private ConnectionInterface $connection;
 
     public function __construct()
     {
-        $this->_connection = new Connection(new Params());
+        $this->connection = new Connection(new Params());
     }
 
     /** @throws Exception */
     public function getList(): array
     {
-        $conn = $this->_connection->connect();
+        $conn = $this->connection->connect();
         $query = sprintf('SELECT * FROM `%s`', 'command');
-        return $conn->query($query)->fetch_all(MYSQLI_ASSOC);
+        return $conn->request($query)->fetch_all(MYSQLI_ASSOC);
     }
 
     /** @throws Exception */
     public function getCommand(string $commandName): array
     {
-        $conn = $this->_connection->connect();
+        $conn = $this->connection->connect();
         $parameters = $conn->getAll("SELECT command.commandId AS commandId,
                                             argument.argumentName AS argumentName,
                                             argument.argumentId AS argumentId,
@@ -70,7 +71,7 @@ class Command implements CommandInterface
     public function upsertCommand(string $commandName, array $arguments, array $options): void
     {
         try {
-            $conn = $this->_connection->connect();
+            $conn = $this->connection->connect();
             $currentArguments = [];
             $currentOptions = [];
             $currentMeanings = [];
@@ -80,7 +81,7 @@ class Command implements CommandInterface
                 list($currentArguments, $currentOptions, $currentMeanings, $commandId) = $currentCommand;
             }
             if (!$commandId) {
-                $conn->query("INSERT INTO command (commandName) VALUES (?s)", $commandName);
+                $conn->request("INSERT INTO command (commandName) VALUES (?s)", $commandName);
                 $commandId = $conn->getOne("SELECT * FROM command WHERE command.commandName IN (?s)", ($commandName));
             }
             $this->upsertArguments($conn, $arguments, $currentArguments, $commandId);
@@ -100,10 +101,10 @@ class Command implements CommandInterface
             $divergenceArguments = array_diff($arguments, $currentArguments);
             foreach ($divergenceArguments as $divergenceArgument) {
                 if (in_array($divergenceArgument, $currentArguments)) {
-                    $conn->query("DELETE FROM argument WHERE argumentName=(?s) AND commandId=(?s)", $divergenceArgument, $commandId);
+                    $conn->request("DELETE FROM argument WHERE argumentName=(?s) AND commandId=(?s)", $divergenceArgument, $commandId);
                     continue;
                 }
-                $conn->query("INSERT INTO argument (argumentName, commandId) VALUES (?s, ?s)", $divergenceArgument, $commandId);
+                $conn->request("INSERT INTO argument (argumentName, commandId) VALUES (?s, ?s)", $divergenceArgument, $commandId);
             }
         } catch (Exception $e) {
             echo "\nError upsert argument. {$e->getMessage()}\n";
@@ -122,7 +123,7 @@ class Command implements CommandInterface
             foreach ($divergenceOptions as $divergenceOption) {
                 if (in_array($divergenceOption, $currentOptions)) {
                     $optionId = array_search($divergenceOption, $currentOptions);
-                    $conn->query("DELETE option
+                    $conn->request("DELETE option
                                   FROM option
                                   LEFT JOIN `meaning` ON `option`.optionId = `meaning`.optionId
                                   WHERE optionId=(?s)", $optionId);
@@ -130,7 +131,7 @@ class Command implements CommandInterface
                     unset($currentMeanings[$optionId]);
                     continue;
                 }
-                $conn->query("INSERT INTO `option` (optionName, commandId) VALUES (?s, ?s)", $divergenceOption, $commandId);
+                $conn->request("INSERT INTO `option` (optionName, commandId) VALUES (?s, ?s)", $divergenceOption, $commandId);
                 $option = $conn->getOne("SELECT * FROM `option` WHERE `option`.`optionName` IN (?s) AND `option`.`commandId` IN (?s)", $divergenceOption, $commandId);
                 $currentOptions[$option] = $divergenceOption;
             }
@@ -152,10 +153,10 @@ class Command implements CommandInterface
                 foreach ($divergenceMeanings as $divergenceMeaning) {
                     if (in_array($divergenceMeaning, $currentMeanings)) {
                         $meaningId = array_search($divergenceMeaning, $currentMeanings);
-                        $conn->query("DELETE FROM `meaning` WHERE meaningId=(?s)", $meaningId);
+                        $conn->request("DELETE FROM `meaning` WHERE meaningId=(?s)", $meaningId);
                         continue;
                     }
-                    $conn->query("INSERT INTO `meaning` (meaning, optionId) VALUES (?s, ?s)", $divergenceMeaning, $optionId);
+                    $conn->request("INSERT INTO `meaning` (meaning, optionId) VALUES (?s, ?s)", $divergenceMeaning, $optionId);
                 }
             }
         } catch (Exception $e) {
