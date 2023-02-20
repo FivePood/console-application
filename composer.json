@@ -12,22 +12,16 @@
   ],
   "require": {
     "php": ">=8.0",
-    "ext-mysqli": "*"
+    "ext-mysqli": "*",
+    "symfony/dependency-injection": "^4.4",
+    "symfony/config": "^4.4",
+    "symfony/yaml": "^4.4"
   },
   "autoload": {
     "psr-4": {
-      "migrations\\": "migrations/",
-      "Application\\": "src/Application/",
-      "Command\\": "src/Application/Command/",
-      "Command/Api\\": "src/Application/Command/Api/",
-      "Command/Service\\": "src/Application/Command/Service/",
-      "Domain\\": "src/Domain/",
-      "Database\\": "src/Domain/Database/",
-      "Database/Api\\": "src/Domain/Database/Api/",
-      "Database/Service\\": "src/Domain/Database/Service/",
-      "Infrastructure\\": "src/Infrastructure/",
-      "Console\\": "src/Infrastructure/Console/",
-      "Output\\": "src/Infrastructure/Output"
-    }
+      "Services\\": "src/",
+      "Migrations\\": "migrations/"
+    },
+    "classmap": ["config"]
   }
 }

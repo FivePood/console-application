@@ -1,20 +1,21 @@
-<?php declare(strict_types=1);
+<?php
 
-namespace migrations;
+declare(strict_types=1);
+
+namespace Migrations;
 
 use Exception;
-use Database\Api\ConnectionInterface;
-use Database\Service\Connection;
-use Database\Service\Params;
+use Services\Domain\Database\Api\ConnectionInterface;
+use Services\Domain\Database\Service\Connection;
 
 class Migrate
 {
     private ConnectionInterface $connection;
 
     /** @throws Exception */
-    function __construct()
+    public function __construct(ConnectionInterface $connection)
     {
-        $this->connection = new Connection(new Params());
+        $this->connection = $connection;
         $this->init();
     }
 
@@ -29,14 +30,18 @@ class Migrate
         } else {
             echo "Starting the migrations...\n";
             foreach ($migrations as $migration) {
-                $command = sprintf('mysql -u%s -p%s -h %s -D %s < %s',
-                                   $conn->getUser(),
-                                   $conn->getPassword(),
-                                   $conn->getHost(),
-                                   $conn->getDBName(),
-                                   $migration);
+                $command = sprintf(
+                    'mysql -u%s -p%s -h %s -D %s < %s',
+                    $conn->getUser(),
+                    $conn->getPassword(),
+                    $conn->getHost(),
+                    $conn->getDBName(),
+                    $migration
+                );
                 shell_exec($command);
-                $conn->request(sprintf('INSERT INTO `%s` (`name`) VALUES ("%s")', $conn->getVersion(), basename($migration)));
+                $conn->request(
+                    sprintf('INSERT INTO `%s` (`name`) VALUES ("%s")', $conn->getVersion(), basename($migration))
+                );
                 echo basename($migration) . "\n";
             }
             echo "\nMigration completed.\n";

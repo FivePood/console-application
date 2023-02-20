@@ -1,0 +1,8 @@
+services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+    public: false
+
+  Services\Infrastructure\Output\Api\ShowInterface:
+    class: Services\Infrastructure\Output\Service\Show

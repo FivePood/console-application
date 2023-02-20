@@ -1,21 +1,30 @@
-<?php declare(strict_types=1);
+<?php
 
-namespace Console;
+declare(strict_types=1);
+
+namespace Services\Infrastructure\Console\Service;
 
 use Exception;
-use migrations\Migrate;
-use Output\Show;
-use Command\Api\CommandInterface;
-use Command\Service\Command;
+use Migrations\Migrate;
+use Services\Application\Command\Api\CommandInterface;
+use Services\Application\Command\Service\Command;
+use Services\Domain\Database\Api\ConnectionInterface;
+use Services\Domain\Database\Service\Connection;
+use Services\Domain\Database\Service\Params;
+use Services\Infrastructure\Console\Api\CommandHandlerInterface;
+use Services\Infrastructure\Output\Api\ShowInterface;
+use Services\Infrastructure\Output\Service\Show;
 
-class CommandHandler
+class CommandHandler implements CommandHandlerInterface
 {
     private CommandInterface $command;
-    private Show $show;
+    private ShowInterface $show;
+    private ConnectionInterface $connection;
 
     public function __construct()
     {
-        $this->command = new Command();
+        $this->connection = new Connection(new Params());
+        $this->command = new Command($this->connection);
         $this->show = new Show();
     }
 
@@ -24,7 +33,7 @@ class CommandHandler
     {
         if (count($arrayArgument) > 1) {
             if ($arrayArgument[1] === DefaultCommand::MIGRATE) {
-                new Migrate();
+                new Migrate($this->connection);
             } elseif (trim($arrayArgument[2], '{}') === DefaultCommand::HELP) {
                 $command = $this->command->getCommand($arrayArgument[1]);
                 $this->show->viewCommand($arrayArgument[1], $command);

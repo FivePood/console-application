@@ -1,6 +1,8 @@
-<?php declare(strict_types=1);
+<?php
 
-namespace Database\Api;
+declare(strict_types=1);
+
+namespace Services\Domain\Database\Api;
 
 use mysqli_result;
 

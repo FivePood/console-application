@@ -1,8 +1,12 @@
-<?php declare(strict_types=1);
+<?php
 
-namespace Output;
+declare(strict_types=1);
 
-class Show
+namespace Services\Infrastructure\Output\Service;
+
+use Services\Infrastructure\Output\Api\ShowInterface;
+
+class Show implements ShowInterface
 {
     public function viewCommand(string $commandName, array $command): void
     {

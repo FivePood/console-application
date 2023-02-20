@@ -1,8 +1,10 @@
 <?php
 
-namespace Database\Service;
+namespace Services\Domain\Database\Service;
 
-class Params
+use Services\Domain\Database\Api\ParamsInterface;
+
+class Params implements ParamsInterface
 {
     private const HOST = 'localhost';
     private const USER = 'root';

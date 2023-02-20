@@ -1,20 +1,20 @@
-<?php declare(strict_types=1);
+<?php
 
-namespace Command\Service;
+declare(strict_types=1);
+
+namespace Services\Application\Command\Service;
 
 use Exception;
-use Command\Api\CommandInterface;
-use Database\Api\ConnectionInterface;
-use Database\Service\Connection;
-use Database\Service\Params;
+use Services\Application\Command\Api\CommandInterface;
+use Services\Domain\Database\Api\ConnectionInterface;
 
 class Command implements CommandInterface
 {
     private ConnectionInterface $connection;
 
-    public function __construct()
+    public function __construct(ConnectionInterface $connection)
     {
-        $this->connection = new Connection(new Params());
+        $this->connection = $connection;
     }
 
     /** @throws Exception */
@@ -29,7 +29,8 @@ class Command implements CommandInterface
     public function getCommand(string $commandName): array
     {
         $conn = $this->connection->connect();
-        $parameters = $conn->getAll("SELECT command.commandId AS commandId,
+        $parameters = $conn->getAll(
+            "SELECT command.commandId AS commandId,
                                             argument.argumentName AS argumentName,
                                             argument.argumentId AS argumentId,
                                             `option`.optionId AS optionId,
@@ -40,7 +41,9 @@ class Command implements CommandInterface
                                      LEFT JOIN argument ON command.commandId = argument.commandId
                                      LEFT JOIN `option` ON command.commandId = `option`.commandId
                                      LEFT JOIN `meaning` ON `option`.optionId = `meaning`.optionId
-                                     WHERE command.commandName IN (?s)", ($commandName));
+                                     WHERE command.commandName IN (?s)",
+            ($commandName)
+        );
         if ($parameters) {
             $commandId = $parameters[0]['commandId'];
             $arguments = [];
@@ -92,19 +95,28 @@ class Command implements CommandInterface
     }
 
     /** @throws Exception */
-    private function upsertArguments(ConnectionInterface $conn,
-                                     array               $arguments,
-                                     array               $currentArguments,
-                                     int                 $commandId): void
-    {
+    private function upsertArguments(
+        ConnectionInterface $conn,
+        array $arguments,
+        array $currentArguments,
+        int $commandId
+    ): void {
         try {
             $divergenceArguments = array_diff($arguments, $currentArguments);
             foreach ($divergenceArguments as $divergenceArgument) {
                 if (in_array($divergenceArgument, $currentArguments)) {
-                    $conn->request("DELETE FROM argument WHERE argumentName=(?s) AND commandId=(?s)", $divergenceArgument, $commandId);
+                    $conn->request(
+                        "DELETE FROM argument WHERE argumentName=(?s) AND commandId=(?s)",
+                        $divergenceArgument,
+                        $commandId
+                    );
                     continue;
                 }
-                $conn->request("INSERT INTO argument (argumentName, commandId) VALUES (?s, ?s)", $divergenceArgument, $commandId);
+                $conn->request(
+                    "INSERT INTO argument (argumentName, commandId) VALUES (?s, ?s)",
+                    $divergenceArgument,
+                    $commandId
+                );
             }
         } catch (Exception $e) {
             echo "\nError upsert argument. {$e->getMessage()}\n";
@@ -112,27 +124,39 @@ class Command implements CommandInterface
     }
 
     /** @throws Exception */
-    private function upsertOptions(ConnectionInterface $conn,
-                                   array               $options,
-                                   array               $currentOptions,
-                                   array               $currentMeanings,
-                                   int                 $commandId): void
-    {
+    private function upsertOptions(
+        ConnectionInterface $conn,
+        array $options,
+        array $currentOptions,
+        array $currentMeanings,
+        int $commandId
+    ): void {
         try {
             $divergenceOptions = array_diff(array_keys($options), $currentOptions);
             foreach ($divergenceOptions as $divergenceOption) {
                 if (in_array($divergenceOption, $currentOptions)) {
                     $optionId = array_search($divergenceOption, $currentOptions);
-                    $conn->request("DELETE option
+                    $conn->request(
+                        "DELETE option
                                   FROM option
                                   LEFT JOIN `meaning` ON `option`.optionId = `meaning`.optionId
-                                  WHERE optionId=(?s)", $optionId);
+                                  WHERE optionId=(?s)",
+                        $optionId
+                    );
                     unset($currentOptions[$optionId]);
                     unset($currentMeanings[$optionId]);
                     continue;
                 }
-                $conn->request("INSERT INTO `option` (optionName, commandId) VALUES (?s, ?s)", $divergenceOption, $commandId);
-                $option = $conn->getOne("SELECT * FROM `option` WHERE `option`.`optionName` IN (?s) AND `option`.`commandId` IN (?s)", $divergenceOption, $commandId);
+                $conn->request(
+                    "INSERT INTO `option` (optionName, commandId) VALUES (?s, ?s)",
+                    $divergenceOption,
+                    $commandId
+                );
+                $option = $conn->getOne(
+                    "SELECT * FROM `option` WHERE `option`.`optionName` IN (?s) AND `option`.`commandId` IN (?s)",
+                    $divergenceOption,
+                    $commandId
+                );
                 $currentOptions[$option] = $divergenceOption;
             }
             $this->upsertMeanings($conn, $options, $currentOptions, $currentMeanings);
@@ -141,11 +165,12 @@ class Command implements CommandInterface
         }
     }
 
-    private function upsertMeanings(ConnectionInterface $conn,
-                                    array               $options,
-                                    array               $currentOptions,
-                                    array               $currentMeanings): void
-    {
+    private function upsertMeanings(
+        ConnectionInterface $conn,
+        array $options,
+        array $currentOptions,
+        array $currentMeanings
+    ): void {
         try {
             foreach ($options as $option => $meaning) {
                 $divergenceMeanings = array_diff($meaning, $currentMeanings);
@@ -156,7 +181,11 @@ class Command implements CommandInterface
                         $conn->request("DELETE FROM `meaning` WHERE meaningId=(?s)", $meaningId);
                         continue;
                     }
-                    $conn->request("INSERT INTO `meaning` (meaning, optionId) VALUES (?s, ?s)", $divergenceMeaning, $optionId);
+                    $conn->request(
+                        "INSERT INTO `meaning` (meaning, optionId) VALUES (?s, ?s)",
+                        $divergenceMeaning,
+                        $optionId
+                    );
                 }
             }
         } catch (Exception $e) {

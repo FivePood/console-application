@@ -1,11 +1,14 @@
-<?php declare(strict_types=1);
+<?php
 
-namespace Database\Service;
+declare(strict_types=1);
+
+namespace Services\Domain\Database\Service;
 
 use Exception;
 use mysqli;
 use mysqli_result;
-use Database\Api\ConnectionInterface;
+use Services\Domain\Database\Api\ConnectionInterface;
+use Services\Domain\Database\Api\ParamsInterface;
 
 class Connection implements ConnectionInterface
 {
@@ -29,7 +32,7 @@ class Connection implements ConnectionInterface
         'versions' => 'versions',
     ];
 
-    public function __construct(Params $params)
+    public function __construct(ParamsInterface $params)
     {
         $this->params = array_merge($this->defaultParams, $params->get());
         $this->errorMode = $this->params['errMode'];
