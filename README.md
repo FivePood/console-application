@@ -6,6 +6,10 @@ Console application
 <директория установки>/src/Module/Database/Application/Params.php
 ```
 
+### Установка composer:
+```sh
+composer install
+```
 ### Генерация автозагрузчика:
 ```sh
 composer dump-autoload

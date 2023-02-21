@@ -7,13 +7,9 @@ namespace Services\Infrastructure\Console\Service;
 use Exception;
 use Migrations\Migrate;
 use Services\Application\Command\Api\CommandInterface;
-use Services\Application\Command\Service\Command;
 use Services\Domain\Database\Api\ConnectionInterface;
-use Services\Domain\Database\Service\Connection;
-use Services\Domain\Database\Service\Params;
 use Services\Infrastructure\Console\Api\CommandHandlerInterface;
 use Services\Infrastructure\Output\Api\ShowInterface;
-use Services\Infrastructure\Output\Service\Show;
 
 class CommandHandler implements CommandHandlerInterface
 {
@@ -21,11 +17,11 @@ class CommandHandler implements CommandHandlerInterface
     private ShowInterface $show;
     private ConnectionInterface $connection;
 
-    public function __construct()
+    public function __construct(ConnectionInterface $connection, CommandInterface $command, ShowInterface $show)
     {
-        $this->connection = new Connection(new Params());
-        $this->command = new Command($this->connection);
-        $this->show = new Show();
+        $this->connection = $connection;
+        $this->command = $command;
+        $this->show = $show;
     }
 
     /** @throws Exception */
