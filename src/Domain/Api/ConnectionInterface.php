@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Services\Domain\Database\Api;
+namespace Services\Domain\Api;
 
 use mysqli_result;
 

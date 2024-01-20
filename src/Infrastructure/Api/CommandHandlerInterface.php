@@ -1,6 +1,6 @@
 <?php
 
-namespace Services\Infrastructure\Console\Api;
+namespace Services\Infrastructure\Api;
 
 interface CommandHandlerInterface
 {

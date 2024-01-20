@@ -2,26 +2,24 @@
 
 declare(strict_types=1);
 
-namespace Services\Infrastructure\Console\Service;
+namespace Services\Infrastructure\Console;
 
 use Exception;
 use Migrations\Migrate;
-use Services\Application\Command\Api\CommandInterface;
-use Services\Domain\Database\Api\ConnectionInterface;
-use Services\Infrastructure\Console\Api\CommandHandlerInterface;
-use Services\Infrastructure\Output\Api\ShowInterface;
+use Services\Application\Api\CommandInterface;
+use Services\Domain\Api\ConnectionInterface;
+use Services\Infrastructure\Api\CommandHandlerInterface;
+use Services\Infrastructure\Output\Show;
 
 class CommandHandler implements CommandHandlerInterface
 {
     private CommandInterface $command;
-    private ShowInterface $show;
     private ConnectionInterface $connection;
 
-    public function __construct(ConnectionInterface $connection, CommandInterface $command, ShowInterface $show)
+    public function __construct(ConnectionInterface $connection, CommandInterface $command)
     {
         $this->connection = $connection;
         $this->command = $command;
-        $this->show = $show;
     }
 
     /** @throws Exception */
@@ -30,15 +28,15 @@ class CommandHandler implements CommandHandlerInterface
         if (count($arrayArgument) > 1) {
             if ($arrayArgument[1] === DefaultCommand::MIGRATE) {
                 new Migrate($this->connection);
-            } elseif (trim($arrayArgument[2], '{}') === DefaultCommand::HELP) {
+            } elseif (trim(string: $arrayArgument[2], characters: '{}') === DefaultCommand::HELP) {
                 $command = $this->command->getCommand($arrayArgument[1]);
-                $this->show->viewCommand($arrayArgument[1], $command);
+                Show::viewCommand($arrayArgument[1], $command);
             } else {
                 $this->processCommand($arrayArgument);
             }
         } else {
             $list = $this->command->getList();
-            $this->show->viewList($list);
+            Show::viewList($list);
         }
     }
 
@@ -46,8 +44,8 @@ class CommandHandler implements CommandHandlerInterface
     private function processCommand(array $arrayArgument): void
     {
         $currentCommand = $this->command->getCommand($arrayArgument[1]);
-        if ($currentCommand) {
-            $this->show->viewExists($arrayArgument[1], $currentCommand);
+        if ($currentCommand && array_key_exists(3, $currentCommand) && $currentCommand[3]) {
+            Show::viewExists($arrayArgument[1], $currentCommand);
         } else {
             $arguments = [];
             $options = [];
@@ -55,15 +53,15 @@ class CommandHandler implements CommandHandlerInterface
                 if ($key === 0 || $key === 1) {
                     continue;
                 }
-                if (preg_match("/[\[\]]/", $value)) {
-                    $parameters = explode("=", trim($value, '[]'));
-                    $options[$parameters[0]][$key] = trim($parameters[1], '{}');
+                if (preg_match(pattern: "/[\[\]]/", subject: $value)) {
+                    $parameters = explode(separator: "=", string: trim(string: $value, characters: '[]'));
+                    $options[$parameters[0]][$key] = trim(string: $parameters[1], characters: '{}');
                     continue;
                 }
-                $arguments[] = trim($value, '{}');
+                $arguments[] = trim(string: $value, characters: '{}');
             }
             $this->command->upsertCommand($arrayArgument[1], $arguments, $options);
-            $this->show->viewAdding($arrayArgument[1]);
+            Show::viewAdding($arrayArgument[1]);
         }
     }
 }

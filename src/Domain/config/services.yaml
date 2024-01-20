@@ -1,0 +1,8 @@
+services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+    public: false
+
+  Services\Domain\Api\ConnectionInterface:
+    class: Services\Domain\Database\Connection

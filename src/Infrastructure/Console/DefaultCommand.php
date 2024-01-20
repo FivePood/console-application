@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Services\Infrastructure\Console\Service;
+namespace Services\Infrastructure\Console;
 
 class DefaultCommand
 {

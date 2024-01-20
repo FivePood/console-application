@@ -1,0 +1,6 @@
+enabled: 0
+#enabled: 1
+scheme: tcp
+host: redis.site
+port: 6380
+pass:

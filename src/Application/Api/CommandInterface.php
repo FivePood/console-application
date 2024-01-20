@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Services\Application\Command\Api;
+namespace Services\Application\Api;
 
 interface CommandInterface
 {

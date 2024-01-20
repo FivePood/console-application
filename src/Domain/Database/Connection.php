@@ -2,17 +2,16 @@
 
 declare(strict_types=1);
 
-namespace Services\Domain\Database\Service;
+namespace Services\Domain\Database;
 
 use Exception;
 use mysqli;
 use mysqli_result;
-use Services\Domain\Database\Api\ConnectionInterface;
-use Services\Domain\Database\Api\ParamsInterface;
+use Services\Domain\Api\ConnectionInterface;
 
 class Connection implements ConnectionInterface
 {
-    private mysqli|false $_conn;
+    private mysqli|false $mysqli;
     private mixed $stats;
     private mixed $errorMode;
     private mixed $exception;
@@ -32,9 +31,9 @@ class Connection implements ConnectionInterface
         'versions' => 'versions',
     ];
 
-    public function __construct(ParamsInterface $params)
+    public function __construct()
     {
-        $this->params = array_merge($this->defaultParams, $params->get());
+        $this->params = array_merge($this->defaultParams, Params::get(Params::DEFAULT_DB));
         $this->errorMode = $this->params['errMode'];
         $this->exception = $this->params['exception'];
 
@@ -42,7 +41,7 @@ class Connection implements ConnectionInterface
             $this->params['host'] = "p:" . $this->params['host'];
         }
 
-        $this->_conn = mysqli_connect(
+        $this->mysqli = mysqli_connect(
             $this->params['host'],
             $this->params['user'],
             $this->params['pass'],
@@ -50,11 +49,11 @@ class Connection implements ConnectionInterface
             $this->params['port'],
             $this->params['socket']
         );
-        if (!$this->_conn) {
-            $this->getError(mysqli_connect_errno() . " " . mysqli_connect_error());
+        if (!$this->mysqli) {
+            $this->getError(error: $this->mysqli->connect_errno . " " . $this->mysqli->connect_error);
         }
 
-        mysqli_set_charset($this->_conn, $this->params['charset']) or $this->getError(mysqli_error($this->_conn));
+        $this->mysqli->set_charset($this->params['charset']) or $this->getError($this->mysqli->error);
     }
 
     /** @throws Exception */
@@ -62,7 +61,7 @@ class Connection implements ConnectionInterface
     {
         $query = $this->request('set names utf8');
         if (!$query) {
-            throw new Exception('Unable to connect to data server.');
+            throw new Exception(message: 'Unable to connect to data server.');
         }
         return $this;
     }
@@ -74,36 +73,36 @@ class Connection implements ConnectionInterface
 
     public function getUser(): string
     {
-        return $this->params['user'];
+        return "{$this->params['user']}";
     }
 
     public function getPassword(): string
     {
-        return $this->params['pass'];
+        return "{$this->params['pass']}";
     }
 
     public function getHost(): string
     {
-        return $this->params['host'];
+        return "{$this->params['host']}";
     }
 
     public function getDBName(): string
     {
-        return $this->params['db'];
+        return "{$this->params['db']}";
     }
 
     public function getVersion(): string
     {
-        return $this->params['versions'];
+        return "{$this->params['versions']}";
     }
 
     public function getOne(): mixed
     {
         $query = $this->prepareQuery(func_get_args());
         if ($res = $this->getRawQuery($query)) {
-            $row = mysqli_fetch_array($res, MYSQLI_ASSOC);
+            $row = mysqli_fetch_array(result: $res, mode: MYSQLI_ASSOC);
             if (is_array($row)) {
-                return reset($row);
+                return reset(array: $row);
             }
             mysqli_free_result($res);
         }
@@ -115,7 +114,7 @@ class Connection implements ConnectionInterface
         $ret = [];
         $query = $this->prepareQuery(func_get_args());
         if ($res = $this->getRawQuery($query)) {
-            while ($row = mysqli_fetch_array($res, MYSQLI_ASSOC)) {
+            while ($row = mysqli_fetch_array(result: $res, mode: MYSQLI_ASSOC)) {
                 $ret[] = $row;
             }
             mysqli_free_result($res);
@@ -125,9 +124,9 @@ class Connection implements ConnectionInterface
 
     private function getRawQuery(string $query): mysqli_result|bool
     {
-        $start = microtime(true);
-        $res = mysqli_query($this->_conn, $query);
-        $timer = microtime(true) - $start;
+        $start = microtime(as_float: true);
+        $timer = microtime(as_float: true) - $start;
+        $res = $this->mysqli->query($query);
 
         $this->stats[] = [
             'query' => $query,
@@ -135,14 +134,14 @@ class Connection implements ConnectionInterface
             'timer' => $timer,
         ];
         if (!$res) {
-            $error = mysqli_error($this->_conn);
+            $error = $this->mysqli->error;
 
-            end($this->stats);
+            end(array: $this->stats);
             $key = key($this->stats);
             $this->stats[$key]['error'] = $error;
             $this->cutStats();
 
-            $this->getError("$error. Full query: [$query]");
+            $this->getError(error: "$error. Full query: [$query]");
         }
         $this->cutStats();
         return $res;
@@ -151,12 +150,12 @@ class Connection implements ConnectionInterface
     private function prepareQuery(array $args): string
     {
         $query = '';
-        $raw = array_shift($args);
-        $array = preg_split('~(\?[nsiuap])~u', $raw, 0, PREG_SPLIT_DELIM_CAPTURE);
+        $raw = array_shift(array: $args);
+        $array = preg_split(pattern: '~(\?[nsiuap])~u', subject: $raw, limit: 0, flags: PREG_SPLIT_DELIM_CAPTURE);
         $aNum = count($args);
-        $pNum = floor(count($array) / 2);
+        $pNum = floor(num: count($array) / 2);
         if ($pNum != $aNum) {
-            $this->getError("Number of args ($aNum) doesn't match number of placeholders ($pNum) in [$raw]");
+            $this->getError(error: "Number of args ($aNum) doesn't match number of placeholders ($pNum) in [$raw]");
         }
 
         foreach ($array as $i => $part) {
@@ -165,7 +164,7 @@ class Connection implements ConnectionInterface
                 continue;
             }
 
-            $value = array_shift($args);
+            $value = array_shift(array: $args);
             $part = match ($part) {
                 '?n' => $this->escapeIdent($value),
                 '?s' => $this->escapeString($value),
@@ -185,11 +184,11 @@ class Connection implements ConnectionInterface
             return 'NULL';
         }
         if (!is_numeric($value)) {
-            $this->getError("Integer (?i) placeholder expects numeric value, " . gettype($value) . " given");
+            $this->getError(error: "Integer (?i) placeholder expects numeric value, " . gettype($value) . " given");
             return false;
         }
         if (is_float($value)) {
-            $value = number_format($value, 0, '.', '');
+            $value = number_format(num: $value, decimals: 0, decimal_separator: '.', thousands_separator: '');
         }
         return $value;
     }
@@ -199,23 +198,24 @@ class Connection implements ConnectionInterface
         if ($value === null) {
             return 'NULL';
         }
-        return "'" . mysqli_real_escape_string($this->_conn, $value) . "'";
+        return "'" . $this->mysqli->real_escape_string($value) . "'";
     }
 
-    private function escapeIdent(mixed $value)
+    private function escapeIdent(mixed $value): bool|string
     {
         if ($value) {
-            return "`" . str_replace("`", "``", $value) . "`";
+            return "`" . str_replace(search: "`", replace: "``", subject: $value) . "`";
         } else {
-            $this->getError("Empty value for identifier (?n) placeholder");
+            $this->getError(error: "Empty value for identifier (?n) placeholder");
+            return false;
         }
     }
 
-    private function createIn(mixed $data)
+    private function createIn(mixed $data): bool|string
     {
         if (!is_array($data)) {
-            $this->getError("Value for IN (?a) placeholder should be array");
-            return;
+            $this->getError(error: "Value for IN (?a) placeholder should be array");
+            return false;
         }
         if (!$data) {
             return 'NULL';
@@ -228,15 +228,15 @@ class Connection implements ConnectionInterface
         return $query;
     }
 
-    private function createSet(mixed $data)
+    private function createSet(mixed $data): bool|string
     {
         if (!is_array($data)) {
-            $this->getError("SET (?u) placeholder expects array, " . gettype($data) . " given");
-            return;
+            $this->getError(error: "SET (?u) placeholder expects array, " . gettype($data) . " given");
+            return false;
         }
         if (!$data) {
-            $this->getError("Empty array for SET (?u) placeholder");
-            return;
+            $this->getError(error: "Empty array for SET (?u) placeholder");
+            return false;
         }
         $query = $comma = '';
         foreach ($data as $key => $value) {
@@ -246,15 +246,15 @@ class Connection implements ConnectionInterface
         return $query;
     }
 
-    private function getError(string $err): void
+    private function getError(string $error): void
     {
-        $err = __CLASS__ . ": " . $err;
+        $error = __CLASS__ . ": " . $error;
 
         if ($this->errorMode == 'error') {
-            $err .= ". Error initiated in {$this->getCaller()}, thrown";
-            trigger_error($err, E_USER_ERROR);
+            $error .= ". Error initiated in {$this->getCaller()}, thrown";
+            trigger_error(message: $error, error_level: E_USER_ERROR);
         } else {
-            throw new $this->exception($err);
+            throw new $this->exception($error);
         }
     }
 
@@ -275,8 +275,8 @@ class Connection implements ConnectionInterface
     private function cutStats(): void
     {
         if (count($this->stats) > 100) {
-            reset($this->stats);
-            $first = key($this->stats);
+            reset(array: $this->stats);
+            $first = key(array: $this->stats);
             unset($this->stats[$first]);
         }
     }

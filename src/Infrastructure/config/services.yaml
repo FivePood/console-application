@@ -1,0 +1,8 @@
+services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+    public: false
+
+  Services\Infrastructure\Api\CommandHandlerInterface:
+    class: Services\Infrastructure\Console\CommandHandler
